@@ -1,0 +1,15 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.egg-info/
+.coverage
+htmlcov/
+dist/
+build/
+clinics.db
+AGENTS.md
+ClinTech.postman_collection.json
+setup.cfg
