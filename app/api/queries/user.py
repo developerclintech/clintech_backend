@@ -61,3 +61,15 @@ class UserRepository:
         await self.session.flush()
         await self.session.refresh(user)
         return user
+
+    async def increment_token_version(self, user: User) -> User:
+        user.token_version += 1
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def set_required_relogin(self, user: User, value: bool) -> User:
+        user.required_relogin = value
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user

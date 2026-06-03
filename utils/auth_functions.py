@@ -33,12 +33,14 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        user_id = decode_access_token(token, settings)
+        user_id, token_version = decode_access_token(token, settings)
     except jwt.JWTError:
         raise credentials_error
 
     user = await UserRepository(session).get_by_id(user_id)
     if user is None or not user.is_active:
+        raise credentials_error
+    if user.token_version != token_version or user.required_relogin:
         raise credentials_error
     return user
 
@@ -133,7 +135,7 @@ def check_practice_access(entity_practice_id: str | None, current_user: User) ->
         current_user,
         [
             UserRole.PRACTICE_ADMIN,
-            UserRole.DOCTOR,
+            UserRole.CODER,
             UserRole.RECEPTIONIST,
             UserRole.STAFF,
         ],

@@ -51,7 +51,9 @@ class AuthService:
                 detail="Incorrect email or password.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token = create_access_token(user.id, self.settings)
+        if user.required_relogin:
+            await self.users.set_required_relogin(user, False)
+        access_token = create_access_token(user.id, user.token_version, self.settings)
         return Token(access_token=access_token)
 
     async def request_password_reset(
@@ -108,6 +110,7 @@ class AuthService:
             raise self._invalid_otp_error()
 
         await self.users.update_password(user, payload.new_password)
+        await self.users.increment_token_version(user)
         await self.password_reset_otps.consume(otp, now)
         return PasswordResetMessage(message=PASSWORD_RESET_SUCCESS_MESSAGE)
 
