@@ -38,3 +38,19 @@ PRACTICE_DELETE_ROLES: list[UserRole] = [
 PRACTICE_STATUS_ROLES: list[UserRole] = [
     UserRole.SUPER_ADMIN,
 ]
+
+DOCUMENT_UPLOAD_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]

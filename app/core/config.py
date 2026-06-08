@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_TIMEOUT_SECONDS: int = 10
 
+    # S3
+    AWS_REGION: str = "eu-west-2"
+    S3_ATTACHMENT_BUCKET: str = "clintech-attachments"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

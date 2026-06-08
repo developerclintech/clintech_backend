@@ -6,9 +6,11 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.blc.auth import AuthService
+from app.api.blc.document import DocumentService
 from app.api.blc.otp_delivery import EmailOtpDeliveryService, OtpDeliveryService
 from app.api.blc.practice import PracticeService
 from app.api.blc.user import UserService
+from app.api.queries.document import DocumentRepository
 from app.api.queries.password_reset_otp import PasswordResetOtpRepository
 from app.api.queries.practice import PracticeRepository
 from app.api.queries.user import UserRepository
@@ -65,3 +67,13 @@ def get_practice_service(
     practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
 ) -> PracticeService:
     return PracticeService(practices=practices)
+
+
+def get_document_repository(session: DbSessionDep) -> DocumentRepository:
+    return DocumentRepository(session)
+
+
+def get_document_service(
+    documents: Annotated[DocumentRepository, Depends(get_document_repository)],
+) -> DocumentService:
+    return DocumentService(documents=documents)
