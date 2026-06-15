@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.document import (
     BulkUploadResponse,
     DocumentRead,
+    DocumentUpdate,
     PaginatedDocumentsResponse,
     UploadFailure,
 )
@@ -168,3 +169,38 @@ class DocumentService:
         except RuntimeError:
             read.download_url = None
         return read
+
+    async def update_document(
+        self, document_id: str, payload: DocumentUpdate, current_user: User
+    ) -> DocumentRead:
+        doc = await self.documents.get_by_id(document_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found.",
+            )
+        doc = await self.documents.update(doc, payload)
+        read = DocumentRead.model_validate(doc)
+        practice_name = doc.practice.name if doc.practice else None
+        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+        try:
+            read.download_url = s3.generate_presigned_url(doc.s3_key)
+        except RuntimeError:
+            read.download_url = None
+        return read
+
+    async def delete_document(self, document_id: str, current_user: User) -> None:
+        doc = await self.documents.get_by_id(document_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found.",
+            )
+        try:
+            s3.delete_file(doc.s3_key)
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=str(exc),
+            ) from exc
+        await self.documents.delete(doc)

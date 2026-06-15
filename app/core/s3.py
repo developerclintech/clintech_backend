@@ -13,7 +13,12 @@ _s3_client = None
 def _get_client():
     global _s3_client
     if _s3_client is None:
-        _s3_client = boto3.client("s3", region_name=settings.AWS_REGION)
+        _s3_client = boto3.client(
+            "s3",
+            region_name=settings.AWS_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
     return _s3_client
 
 
@@ -42,6 +47,14 @@ def download_file(s3_key: str) -> bytes:
         return response["Body"].read()
     except (BotoCoreError, ClientError) as e:
         raise RuntimeError(f"S3 download failed for key '{s3_key}': {e}") from e
+
+
+def delete_file(s3_key: str) -> None:
+    """Delete an object from S3."""
+    try:
+        _get_client().delete_object(Bucket=settings.S3_ATTACHMENT_BUCKET, Key=s3_key)
+    except (BotoCoreError, ClientError) as e:
+        raise RuntimeError(f"S3 delete failed for key '{s3_key}': {e}") from e
 
 
 def generate_presigned_url(s3_key: str, expiry_seconds: int = 900) -> str:

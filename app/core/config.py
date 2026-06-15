@@ -44,7 +44,9 @@ class Settings(BaseSettings):
 
     # S3
     AWS_REGION: str = "eu-west-2"
-    S3_ATTACHMENT_BUCKET: str = "clintech-attachments"
+    S3_ATTACHMENT_BUCKET: str = Field(default="clintech-attachments", validation_alias="S3_BUCKET")
+    AWS_ACCESS_KEY_ID: str | None = Field(default=None, validation_alias="ACCESS_KEY")
+    AWS_SECRET_ACCESS_KEY: str | None = Field(default=None, validation_alias="S3_SECRET_KEY")
 
     model_config = SettingsConfigDict(
         env_file=".env",

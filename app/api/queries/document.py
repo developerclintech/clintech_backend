@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.document import Document
+from app.schemas.document import DocumentUpdate
 from utils.enums import DocumentCategory, DocumentStatus
 
 
@@ -47,6 +48,19 @@ class DocumentRepository:
             .where(Document.id == document_id)
         )
         return result.scalar_one_or_none()
+
+    async def update(self, doc: Document, payload: DocumentUpdate) -> Document:
+        for field, value in payload.model_dump(exclude_none=True).items():
+            if isinstance(value, (DocumentCategory, DocumentStatus)):
+                value = value.value
+            setattr(doc, field, value)
+        await self.session.flush()
+        await self.session.refresh(doc)
+        return doc
+
+    async def delete(self, doc: Document) -> None:
+        await self.session.delete(doc)
+        await self.session.flush()
 
     async def get_paginated(
         self,

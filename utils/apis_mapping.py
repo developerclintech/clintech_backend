@@ -54,3 +54,16 @@ DOCUMENT_READ_ROLES: list[UserRole] = [
     UserRole.RECEPTIONIST,
     UserRole.STAFF,
 ]
+
+DOCUMENT_EDIT_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]

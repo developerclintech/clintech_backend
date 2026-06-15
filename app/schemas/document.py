@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from utils.enums import DocumentCategory, DocumentStatus
+
+
+class DocumentUpdate(BaseModel):
+    description: str | None = Field(default=None, max_length=500)
+    category: DocumentCategory | None = None
+    status: DocumentStatus | None = None
+    practice_id: str | None = None
 
 
 class DocumentRead(BaseModel):
