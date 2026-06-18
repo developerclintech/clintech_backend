@@ -6,6 +6,7 @@ import re
 from fastapi import HTTPException, UploadFile, status
 
 from app.api.queries.document import DocumentRepository
+from app.api.queries.practice import PracticeRepository
 from app.core import s3
 from app.models.user import User
 from app.schemas.document import (
@@ -64,8 +65,16 @@ def _enrich(doc_read: DocumentRead, practice_name: str | None, filename: str, co
 
 
 class DocumentService:
-    def __init__(self, *, documents: DocumentRepository) -> None:
+    def __init__(self, *, documents: DocumentRepository, practices: PracticeRepository) -> None:
         self.documents = documents
+        self.practices = practices
+
+    async def _validate_practice(self, practice_id: str | None) -> None:
+        if practice_id is not None and await self.practices.get_by_id(practice_id) is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Practice not found.",
+            )
 
     async def upload_documents(
         self,
@@ -75,6 +84,7 @@ class DocumentService:
         description: str | None = None,
         category: DocumentCategory | None = None,
     ) -> BulkUploadResponse:
+        await self._validate_practice(practice_id)
         uploaded: list[DocumentRead] = []
         failed: list[UploadFailure] = []
 
@@ -179,7 +189,27 @@ class DocumentService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Document not found.",
             )
+        await self._validate_practice(payload.practice_id)
         doc = await self.documents.update(doc, payload)
+        read = DocumentRead.model_validate(doc)
+        practice_name = doc.practice.name if doc.practice else None
+        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+        try:
+            read.download_url = s3.generate_presigned_url(doc.s3_key)
+        except RuntimeError:
+            read.download_url = None
+        return read
+
+    async def change_document_status(
+        self, document_id: str, new_status: DocumentStatus, current_user: User
+    ) -> DocumentRead:
+        doc = await self.documents.get_by_id(document_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found.",
+            )
+        doc = await self.documents.update(doc, DocumentUpdate(status=new_status))
         read = DocumentRead.model_validate(doc)
         practice_name = doc.practice.name if doc.practice else None
         _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)

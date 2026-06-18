@@ -34,7 +34,7 @@ async def get_current_user(
     )
     try:
         user_id, token_version = decode_access_token(token, settings)
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise credentials_error
 
     user = await UserRepository(session).get_by_id(user_id)

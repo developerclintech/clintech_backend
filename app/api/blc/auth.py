@@ -78,11 +78,17 @@ class AuthService:
             otp_hash=hash_otp(otp_code, self.settings),
             expires_at=expires_at,
         )
-        await self.otp_delivery.send_password_reset_otp(
-            destination=user.email,
-            otp_code=otp_code,
-            expires_at=expires_at,
-        )
+        try:
+            await self.otp_delivery.send_password_reset_otp(
+                destination=user.email,
+                otp_code=otp_code,
+                expires_at=expires_at,
+            )
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to send password reset email. Please try again later.",
+            ) from exc
 
         return PasswordResetMessage(message=PASSWORD_RESET_REQUESTED_MESSAGE)
 

@@ -14,6 +14,10 @@ class DocumentUpdate(BaseModel):
     practice_id: str | None = None
 
 
+class DocumentStatusUpdate(BaseModel):
+    status: DocumentStatus
+
+
 class DocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

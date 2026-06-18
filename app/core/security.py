@@ -28,7 +28,7 @@ def create_access_token(user_id: str, token_version: int, settings: Settings) ->
 
 
 def decode_access_token(token: str, settings: Settings) -> tuple[str, int]:
-    """Decode a JWT and return (user_id, token_version). Raises jwt.JWTError on invalid token."""
+    """Decode a JWT and return (user_id, token_version). Raises jwt.PyJWTError on invalid token."""
     payload = jwt.decode(
         token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
     )

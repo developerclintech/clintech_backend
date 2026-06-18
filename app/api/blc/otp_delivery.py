@@ -43,12 +43,20 @@ class EmailOtpDeliveryService:
             )
             return
 
-        await asyncio.to_thread(
-            self._send_email,
-            destination=destination,
-            otp_code=otp_code,
-            expires_at=expires_at,
-        )
+        try:
+            await asyncio.to_thread(
+                self._send_email,
+                destination=destination,
+                otp_code=otp_code,
+                expires_at=expires_at,
+            )
+        except Exception as exc:
+            self.logger.error(
+                "otp_email_delivery_failed",
+                destination=destination,
+                error=str(exc),
+            )
+            raise RuntimeError("Failed to deliver OTP email.") from exc
 
     def _send_email(
         self,

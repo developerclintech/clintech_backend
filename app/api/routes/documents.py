@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from app.api.blc.document import DocumentService
 from app.api.deps import get_document_service
 from app.models.user import User
-from app.schemas.document import BulkUploadResponse, DocumentRead, DocumentUpdate, PaginatedDocumentsResponse
+from app.schemas.document import BulkUploadResponse, DocumentRead, DocumentStatusUpdate, DocumentUpdate, PaginatedDocumentsResponse
 from utils.apis_mapping import (
     DOCUMENT_DELETE_ROLES,
     DOCUMENT_EDIT_ROLES,
@@ -125,6 +125,20 @@ async def update_document(
     current_user: Annotated[User, Depends(require_roles(DOCUMENT_EDIT_ROLES))],
 ) -> DocumentRead:
     return await service.update_document(document_id, payload, current_user)
+
+
+@router.patch(
+    "/{document_id}/status",
+    response_model=DocumentRead,
+    summary="Change the status of a document",
+)
+async def change_document_status(
+    document_id: str,
+    payload: DocumentStatusUpdate,
+    service: Annotated[DocumentService, Depends(get_document_service)],
+    current_user: Annotated[User, Depends(require_roles(DOCUMENT_EDIT_ROLES))],
+) -> DocumentRead:
+    return await service.change_document_status(document_id, payload.status, current_user)
 
 
 @router.delete(

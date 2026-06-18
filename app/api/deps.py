@@ -75,5 +75,6 @@ def get_document_repository(session: DbSessionDep) -> DocumentRepository:
 
 def get_document_service(
     documents: Annotated[DocumentRepository, Depends(get_document_repository)],
+    practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
 ) -> DocumentService:
-    return DocumentService(documents=documents)
+    return DocumentService(documents=documents, practices=practices)
