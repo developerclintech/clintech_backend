@@ -23,3 +23,25 @@ class DocumentStatus(str, enum.Enum):
     PENDING = "pending"
     PROCESSED = "processed"
     FAILED = "failed"
+
+
+class TaskStatus(str, enum.Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class TaskPriority(str, enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class TaskCategory(str, enum.Enum):
+    ADMINISTRATIVE = "administrative"
+    CLINICAL = "clinical"
+    BILLING = "billing"
+    FOLLOW_UP = "follow_up"
+    REFERRAL = "referral"
+    OTHER = "other"

@@ -38,9 +38,16 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
-    SMTP_FROM_EMAIL: str = "no-reply@clinics.local"
+    SMTP_FROM_EMAIL: str = "developers@clintech.ae"
     SMTP_USE_TLS: bool = True
     SMTP_TIMEOUT_SECONDS: int = 10
+
+    # Mailjet — takes precedence over SMTP when both public and private keys are set.
+    MJ_APIKEY_PUBLIC: str | None = None
+    MJ_APIKEY_PRIVATE: str | None = None
+    MJ_URL: str = "https://api.mailjet.com/v3.1/send"
+    MJ_FROM_EMAIL: str = Field(default="developers@clintech.ae", validation_alias="FROM_EMAIL")
+    MJ_FROM_NAME: str = Field(default="Clin Tech", validation_alias="FROM_NAME")
 
     # S3
     AWS_REGION: str = "eu-west-2"
