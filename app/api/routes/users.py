@@ -23,6 +23,14 @@ async def create_user(
     return await service.create_user(payload, current_user)
 
 
+@router.get("", response_model=list[UserRead])
+async def list_users(
+    service: Annotated[UserService, Depends(get_user_service)],
+    current_user: Annotated[User, Depends(require_roles(USER_READ_ROLES))],
+) -> list[UserRead]:
+    return await service.list_users(current_user)
+
+
 @router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: str,
