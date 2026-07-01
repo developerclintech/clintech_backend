@@ -31,17 +31,13 @@ class TaskStatus(str, enum.Enum):
     COMPLETED = "completed"
 
 
-class TaskPriority(str, enum.Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    URGENT = "urgent"
+DEFAULT_TASK_PRIORITIES: list[str] = ["low", "medium", "high", "urgent"]
 
-
-class TaskCategory(str, enum.Enum):
-    ADMINISTRATIVE = "administrative"
-    CLINICAL = "clinical"
-    BILLING = "billing"
-    FOLLOW_UP = "follow_up"
-    REFERRAL = "referral"
-    OTHER = "other"
+DEFAULT_TASK_CATEGORIES: list[str] = [
+    "administrative",
+    "clinical",
+    "billing",
+    "follow_up",
+    "referral",
+    "other",
+]
