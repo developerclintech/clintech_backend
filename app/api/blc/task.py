@@ -5,6 +5,8 @@ import math
 from fastapi import HTTPException, status
 
 from app.api.queries.task import TaskRepository
+from app.api.queries.task_category import TaskCategoryRepository
+from app.api.queries.task_priority import TaskPriorityRepository
 from app.api.queries.user import UserRepository
 from app.models.user import User
 from app.schemas.task import (
@@ -14,7 +16,7 @@ from app.schemas.task import (
     TaskRead,
     TaskUpdate,
 )
-from utils.enums import TaskCategory, TaskPriority, TaskStatus
+from utils.enums import TaskStatus
 
 
 def _to_read(task: object) -> TaskRead:
@@ -27,9 +29,18 @@ def _to_read(task: object) -> TaskRead:
 
 
 class TaskService:
-    def __init__(self, *, tasks: TaskRepository, users: UserRepository) -> None:
+    def __init__(
+        self,
+        *,
+        tasks: TaskRepository,
+        users: UserRepository,
+        task_categories: TaskCategoryRepository,
+        task_priorities: TaskPriorityRepository,
+    ) -> None:
         self.tasks = tasks
         self.users = users
+        self.task_categories = task_categories
+        self.task_priorities = task_priorities
 
     async def _validate_assignee(self, assigned_to_id: str | None) -> None:
         if assigned_to_id is not None:
@@ -40,8 +51,30 @@ class TaskService:
                     detail="Assigned user not found.",
                 )
 
+    async def _validate_priority(self, practice_id: str | None, priority: str) -> None:
+        if practice_id is None:
+            return
+        found = await self.task_priorities.get_by_name(practice_id, priority)
+        if found is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Priority '{priority}' is not defined for this practice.",
+            )
+
+    async def _validate_category(self, practice_id: str | None, category: str) -> None:
+        if practice_id is None:
+            return
+        found = await self.task_categories.get_by_name(practice_id, category)
+        if found is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category '{category}' is not defined for this practice.",
+            )
+
     async def create_task(self, payload: TaskCreate, current_user: User) -> TaskRead:
         await self._validate_assignee(payload.assigned_to_id)
+        await self._validate_priority(payload.practice_id, payload.priority)
+        await self._validate_category(payload.practice_id, payload.category)
         task = await self.tasks.create(
             title=payload.title,
             priority=payload.priority,
@@ -60,8 +93,8 @@ class TaskService:
         page: int,
         page_size: int,
         status: TaskStatus | None = None,
-        priority: TaskPriority | None = None,
-        category: TaskCategory | None = None,
+        priority: str | None = None,
+        category: str | None = None,
         practice_id: str | None = None,
         assigned_to_id: str | None = None,
     ) -> PaginatedTasksResponse:
@@ -101,6 +134,10 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found.",
             )
+        if payload.priority is not None:
+            await self._validate_priority(task.practice_id, payload.priority)
+        if payload.category is not None:
+            await self._validate_category(task.practice_id, payload.category)
         task = await self.tasks.update(task, payload)
         task = await self.tasks.get_by_id(task.id)
         return _to_read(task)

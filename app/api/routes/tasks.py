@@ -23,7 +23,7 @@ from utils.apis_mapping import (
     TASK_READ_ROLES,
 )
 from utils.auth_functions import require_roles
-from utils.enums import TaskCategory, TaskPriority, TaskStatus
+from utils.enums import TaskStatus
 
 router = APIRouter()
 
@@ -53,8 +53,8 @@ async def list_tasks(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     status: Annotated[TaskStatus | None, Query()] = None,
-    priority: Annotated[TaskPriority | None, Query()] = None,
-    category: Annotated[TaskCategory | None, Query()] = None,
+    priority: Annotated[str | None, Query()] = None,
+    category: Annotated[str | None, Query()] = None,
     practice_id: Annotated[str | None, Query()] = None,
     assigned_to_id: Annotated[str | None, Query()] = None,
 ) -> PaginatedTasksResponse:

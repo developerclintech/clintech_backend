@@ -104,3 +104,29 @@ TASK_DELETE_ROLES: list[UserRole] = [
     UserRole.SUPER_ADMIN,
     UserRole.PRACTICE_ADMIN,
 ]
+
+TASK_CATEGORY_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_CATEGORY_MANAGE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+TASK_PRIORITY_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_PRIORITY_MANAGE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]

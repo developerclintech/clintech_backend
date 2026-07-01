@@ -3,18 +3,33 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 
 from app.api.queries.practice import PracticeRepository
+from app.api.queries.task_category import TaskCategoryRepository
+from app.api.queries.task_priority import TaskPriorityRepository
 from app.models.user import User
 from app.schemas.practice import PracticeCreate, PracticeRead, PracticeStatusUpdate, PracticeUpdate
+from utils.enums import DEFAULT_TASK_CATEGORIES, DEFAULT_TASK_PRIORITIES
 
 
 class PracticeService:
-    def __init__(self, *, practices: PracticeRepository) -> None:
+    def __init__(
+        self,
+        *,
+        practices: PracticeRepository,
+        task_categories: TaskCategoryRepository,
+        task_priorities: TaskPriorityRepository,
+    ) -> None:
         self.practices = practices
+        self.task_categories = task_categories
+        self.task_priorities = task_priorities
 
     async def create_practice(
         self, payload: PracticeCreate, current_user: User
     ) -> PracticeRead:
         practice = await self.practices.create(payload)
+        for name in DEFAULT_TASK_CATEGORIES:
+            await self.task_categories.create(name=name, practice_id=practice.id)
+        for name in DEFAULT_TASK_PRIORITIES:
+            await self.task_priorities.create(name=name, practice_id=practice.id)
         return PracticeRead.model_validate(practice)
 
     async def get_practice(
