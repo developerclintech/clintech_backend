@@ -11,8 +11,10 @@ class TaskCategoryRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, *, name: str, practice_id: str) -> TaskCategory:
-        category = TaskCategory(name=name, practice_id=practice_id)
+    async def create(
+        self, *, name: str, practice_id: str, color: str | None = None, description: str | None = None
+    ) -> TaskCategory:
+        category = TaskCategory(name=name, practice_id=practice_id, color=color, description=description)
         self.session.add(category)
         await self.session.flush()
         await self.session.refresh(category)
@@ -41,6 +43,8 @@ class TaskCategoryRepository:
 
     async def update(self, category: TaskCategory, payload: TaskCategoryUpdate) -> TaskCategory:
         category.name = payload.name
+        category.color = payload.color
+        category.description = payload.description
         await self.session.flush()
         await self.session.refresh(category)
         return category
