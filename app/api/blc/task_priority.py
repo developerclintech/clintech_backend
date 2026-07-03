@@ -34,7 +34,13 @@ class TaskPriorityService:
     ) -> TaskPriorityRead:
         await self._ensure_practice_exists(payload.practice_id)
         await self._ensure_name_available(payload.practice_id, payload.name)
-        priority = await self.priorities.create(name=payload.name, practice_id=payload.practice_id)
+        priority = await self.priorities.create(
+            name=payload.name,
+            practice_id=payload.practice_id,
+            color=payload.color,
+            sort_order=payload.sort_order,
+            description=payload.description,
+        )
         return TaskPriorityRead.model_validate(priority)
 
     async def list_priorities(

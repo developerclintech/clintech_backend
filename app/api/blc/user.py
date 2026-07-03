@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from app.api.queries.practice import PracticeRepository
 from app.api.queries.user import UserRepository
 from app.models.user import User
-from app.schemas.user import MembershipCreate, MembershipRead, UserCreate, UserRead
+from app.schemas.user import MembershipCreate, MembershipRead, UserCreate, UserRead, UserStatusUpdate, UserUpdate
 from utils.auth_functions import has_role, is_super_admin
 from utils.enums import UserRole
 
@@ -67,6 +67,66 @@ class UserService:
     async def list_users(self, current_user: User) -> list[UserRead]:
         users = await self.users.get_all()
         return [UserRead.model_validate(user) for user in users]
+
+    async def update_user(
+        self, user_id: str, payload: UserUpdate, current_user: User
+    ) -> UserRead:
+        user = await self.users.get_by_id(user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        user = await self.users.update(user, payload)
+        return UserRead.model_validate(user)
+
+    async def update_user_status(
+        self, user_id: str, payload: UserStatusUpdate, current_user: User
+    ) -> UserRead:
+        user = await self.users.get_by_id(user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        user = await self.users.set_status(user, payload.is_active)
+        return UserRead.model_validate(user)
+
+    async def delete_user(self, user_id: str, current_user: User) -> None:
+        user = await self.users.get_by_id(user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        await self.users.delete(user)
+
+    async def remove_membership(
+        self, user_id: str, membership_id: str, current_user: User
+    ) -> None:
+        user = await self.users.get_by_id(user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        membership = await self.users.get_membership_by_id(user_id, membership_id)
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Membership not found.",
+            )
+        if not is_super_admin(current_user) and membership.practice_id is not None:
+            if not has_role(
+                current_user,
+                [UserRole.PRACTICE_ADMIN],
+                practice_id=membership.practice_id,
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have access to this practice.",
+                )
+        await self.users.delete_membership(membership)
 
     async def add_membership(
         self,

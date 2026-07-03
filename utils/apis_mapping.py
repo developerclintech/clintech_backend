@@ -12,7 +12,25 @@ USER_READ_ROLES: list[UserRole] = [
     UserRole.PRACTICE_ADMIN,
 ]
 
+USER_EDIT_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+USER_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+]
+
+USER_STATUS_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+]
+
 MEMBERSHIP_MANAGE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+MEMBERSHIP_DELETE_ROLES: list[UserRole] = [
     UserRole.SUPER_ADMIN,
     UserRole.PRACTICE_ADMIN,
 ]

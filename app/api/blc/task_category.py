@@ -34,7 +34,12 @@ class TaskCategoryService:
     ) -> TaskCategoryRead:
         await self._ensure_practice_exists(payload.practice_id)
         await self._ensure_name_available(payload.practice_id, payload.name)
-        category = await self.categories.create(name=payload.name, practice_id=payload.practice_id)
+        category = await self.categories.create(
+            name=payload.name,
+            practice_id=payload.practice_id,
+            color=payload.color,
+            description=payload.description,
+        )
         return TaskCategoryRead.model_validate(category)
 
     async def list_categories(

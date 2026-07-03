@@ -11,8 +11,18 @@ class TaskPriorityRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, *, name: str, practice_id: str) -> TaskPriority:
-        priority = TaskPriority(name=name, practice_id=practice_id)
+    async def create(
+        self,
+        *,
+        name: str,
+        practice_id: str,
+        color: str | None = None,
+        sort_order: int | None = None,
+        description: str | None = None,
+    ) -> TaskPriority:
+        priority = TaskPriority(
+            name=name, practice_id=practice_id, color=color, sort_order=sort_order, description=description
+        )
         self.session.add(priority)
         await self.session.flush()
         await self.session.refresh(priority)
@@ -41,6 +51,9 @@ class TaskPriorityRepository:
 
     async def update(self, priority: TaskPriority, payload: TaskPriorityUpdate) -> TaskPriority:
         priority.name = payload.name
+        priority.color = payload.color
+        priority.sort_order = payload.sort_order
+        priority.description = payload.description
         await self.session.flush()
         await self.session.refresh(priority)
         return priority

@@ -36,6 +36,17 @@ class UserCreate(BaseModel):
         return v
 
 
+class UserUpdate(BaseModel):
+    first_name: str | None = Field(default=None, min_length=1, max_length=255)
+    middle_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
 class MembershipCreate(BaseModel):
     practice_id: str | None = None
     role: UserRole
