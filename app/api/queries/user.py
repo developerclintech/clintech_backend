@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.core.security import hash_password
 from app.models.user import User
 from app.models.user_practice import UserPractice
-from app.schemas.user import MembershipCreate, UserCreate
+from app.schemas.user import MembershipCreate, UserCreate, UserUpdate
 
 
 class UserRepository:
@@ -63,6 +63,41 @@ class UserRepository:
         await self.session.flush()
         await self.session.refresh(membership)
         return membership
+
+    async def get_membership_by_id(
+        self, user_id: str, membership_id: str
+    ) -> UserPractice | None:
+        result = await self.session.execute(
+            select(UserPractice).where(
+                UserPractice.id == membership_id,
+                UserPractice.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def update(self, user: User, payload: UserUpdate) -> User:
+        data = payload.model_dump(exclude_none=True)
+        for field, value in data.items():
+            setattr(user, field, value)
+        if "first_name" in data or "last_name" in data:
+            user.full_name = f"{user.first_name} {user.last_name}"
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def set_status(self, user: User, is_active: bool) -> User:
+        user.is_active = is_active
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def delete(self, user: User) -> None:
+        await self.session.delete(user)
+        await self.session.flush()
+
+    async def delete_membership(self, membership: UserPractice) -> None:
+        await self.session.delete(membership)
+        await self.session.flush()
 
     async def update_password(self, user: User, password: str) -> User:
         user.hashed_password = hash_password(password)
