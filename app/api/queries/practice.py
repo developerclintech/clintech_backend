@@ -19,6 +19,7 @@ class PracticeRepository:
             phone=payload.phone,
             website=payload.website,
             email=payload.email,
+            address=payload.address,
             practice_hours=payload.practice_hours,
             is_emis_enabled=payload.is_emis_enabled,
         )
