@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import re
+from datetime import datetime
 
 from fastapi import HTTPException, UploadFile, status
 
@@ -10,10 +11,15 @@ from app.api.queries.practice import PracticeRepository
 from app.core import s3
 from app.models.user import User
 from app.schemas.document import (
+    BulkDeleteFailure,
+    BulkDeleteResponse,
     BulkUploadResponse,
+    CategoryCount,
     DocumentRead,
+    DocumentStats,
     DocumentUpdate,
     PaginatedDocumentsResponse,
+    StatusCount,
     UploadFailure,
 )
 from utils.enums import DocumentCategory, DocumentStatus
@@ -57,10 +63,18 @@ def _format_size(size_bytes: int) -> str:
     return f"{size_bytes / 1024 ** 2:.1f} MB"
 
 
-def _enrich(doc_read: DocumentRead, practice_name: str | None, filename: str, content_type: str, file_size: int) -> DocumentRead:
+def _enrich(
+    doc_read: DocumentRead,
+    practice_name: str | None,
+    filename: str,
+    content_type: str,
+    file_size: int,
+    uploaded_by_name: str | None = None,
+) -> DocumentRead:
     doc_read.practice_name = practice_name
     doc_read.file_type = _file_type_label(filename, content_type)
     doc_read.file_size_display = _format_size(file_size)
+    doc_read.uploaded_by_name = uploaded_by_name
     return doc_read
 
 
@@ -123,7 +137,7 @@ class DocumentService:
 
                 read = DocumentRead.model_validate(doc)
                 read.download_url = s3.generate_presigned_url(s3_key)
-                _enrich(read, None, filename, content_type, len(content))
+                _enrich(read, None, filename, content_type, len(content), uploaded_by_name=current_user.full_name)
                 uploaded.append(read)
 
             except RuntimeError as exc:
@@ -141,6 +155,12 @@ class DocumentService:
         practice_id: str | None = None,
         category: DocumentCategory | None = None,
         status: DocumentStatus | None = None,
+        uploaded_by_id: str | None = None,
+        filename: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
     ) -> PaginatedDocumentsResponse:
         docs, total = await self.documents.get_paginated(
             page=page,
@@ -148,12 +168,19 @@ class DocumentService:
             practice_id=practice_id,
             category=category,
             status=status,
+            uploaded_by_id=uploaded_by_id,
+            filename=filename,
+            date_from=date_from,
+            date_to=date_to,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
         items: list[DocumentRead] = []
         for doc in docs:
             read = DocumentRead.model_validate(doc)
             practice_name = doc.practice.name if doc.practice else None
-            _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+            uploaded_by_name = doc.uploaded_by.full_name if doc.uploaded_by else None
+            _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size, uploaded_by_name=uploaded_by_name)
             items.append(read)
 
         return PaginatedDocumentsResponse(
@@ -173,12 +200,39 @@ class DocumentService:
             )
         read = DocumentRead.model_validate(doc)
         practice_name = doc.practice.name if doc.practice else None
-        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+        uploaded_by_name = doc.uploaded_by.full_name if doc.uploaded_by else None
+        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size, uploaded_by_name=uploaded_by_name)
         try:
             read.download_url = s3.generate_presigned_url(doc.s3_key)
         except RuntimeError:
             read.download_url = None
         return read
+
+    async def get_presigned_url(self, document_id: str, current_user: User) -> str:
+        doc = await self.documents.get_by_id(document_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found.",
+            )
+        try:
+            return s3.generate_presigned_url(doc.s3_key)
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=str(exc),
+            ) from exc
+
+    async def get_stats(self, current_user: User, practice_id: str | None = None) -> DocumentStats:
+        await self._validate_practice(practice_id)
+        raw = await self.documents.get_stats(practice_id=practice_id)
+        return DocumentStats(
+            total_documents=raw["total_documents"],
+            total_size_bytes=raw["total_size_bytes"],
+            total_size_display=_format_size(raw["total_size_bytes"]),
+            by_status=[StatusCount(**r) for r in raw["by_status"]],
+            by_category=[CategoryCount(**r) for r in raw["by_category"]],
+        )
 
     async def update_document(
         self, document_id: str, payload: DocumentUpdate, current_user: User
@@ -193,7 +247,8 @@ class DocumentService:
         doc = await self.documents.update(doc, payload)
         read = DocumentRead.model_validate(doc)
         practice_name = doc.practice.name if doc.practice else None
-        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+        uploaded_by_name = doc.uploaded_by.full_name if doc.uploaded_by else None
+        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size, uploaded_by_name=uploaded_by_name)
         try:
             read.download_url = s3.generate_presigned_url(doc.s3_key)
         except RuntimeError:
@@ -212,12 +267,81 @@ class DocumentService:
         doc = await self.documents.update(doc, DocumentUpdate(status=new_status))
         read = DocumentRead.model_validate(doc)
         practice_name = doc.practice.name if doc.practice else None
-        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size)
+        uploaded_by_name = doc.uploaded_by.full_name if doc.uploaded_by else None
+        _enrich(read, practice_name, doc.filename, doc.content_type, doc.file_size, uploaded_by_name=uploaded_by_name)
         try:
             read.download_url = s3.generate_presigned_url(doc.s3_key)
         except RuntimeError:
             read.download_url = None
         return read
+
+    async def replace_document_file(
+        self, document_id: str, file: UploadFile, current_user: User
+    ) -> DocumentRead:
+        doc = await self.documents.get_by_id(document_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found.",
+            )
+
+        filename = file.filename or "unnamed"
+        content = await file.read()
+        if len(content) > _MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds the 50 MB limit ({len(content)} bytes).",
+            )
+
+        content_type = file.content_type or "application/octet-stream"
+        old_s3_key = doc.s3_key
+        new_s3_key = _build_s3_key(document_id, filename, doc.practice_id)
+
+        s3.upload_file(content, new_s3_key, content_type)
+
+        if new_s3_key != old_s3_key:
+            try:
+                s3.delete_file(old_s3_key)
+            except RuntimeError:
+                pass
+
+        doc.filename = filename
+        doc.s3_key = new_s3_key
+        doc.content_type = content_type
+        doc.file_size = len(content)
+        await self.documents.session.flush()
+        await self.documents.session.refresh(doc)
+
+        read = DocumentRead.model_validate(doc)
+        practice_name = doc.practice.name if doc.practice else None
+        uploaded_by_name = doc.uploaded_by.full_name if doc.uploaded_by else None
+        read.download_url = s3.generate_presigned_url(new_s3_key)
+        _enrich(read, practice_name, filename, content_type, len(content), uploaded_by_name=uploaded_by_name)
+        return read
+
+    async def bulk_delete_documents(
+        self, ids: list[str], current_user: User
+    ) -> BulkDeleteResponse:
+        docs = await self.documents.get_by_ids(ids)
+        found: dict[str, object] = {doc.id: doc for doc in docs}
+
+        deleted: list[str] = []
+        failed: list[BulkDeleteFailure] = []
+
+        for doc_id in ids:
+            if doc_id not in found:
+                failed.append(BulkDeleteFailure(id=doc_id, reason="Document not found."))
+                continue
+            doc = found[doc_id]
+            try:
+                s3.delete_file(doc.s3_key)
+            except RuntimeError as exc:
+                failed.append(BulkDeleteFailure(id=doc_id, reason=str(exc)))
+                continue
+            await self.documents.delete(doc)
+            deleted.append(doc_id)
+
+        return BulkDeleteResponse(deleted=deleted, failed=failed)
 
     async def delete_document(self, document_id: str, current_user: User) -> None:
         doc = await self.documents.get_by_id(document_id)
