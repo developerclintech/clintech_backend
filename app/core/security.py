@@ -19,20 +19,20 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_access_token(user_id: str, settings: Settings) -> str:
+def create_access_token(user_id: str, token_version: int, settings: Settings) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    payload: dict[str, Any] = {"sub": user_id, "exp": expire}
+    payload: dict[str, Any] = {"sub": user_id, "tv": token_version, "exp": expire}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def decode_access_token(token: str, settings: Settings) -> str:
-    """Decode a JWT and return the user_id (sub claim). Raises jwt.JWTError on invalid token."""
+def decode_access_token(token: str, settings: Settings) -> tuple[str, int]:
+    """Decode a JWT and return (user_id, token_version). Raises jwt.PyJWTError on invalid token."""
     payload = jwt.decode(
         token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
     )
-    return str(payload["sub"])
+    return str(payload["sub"]), int(payload.get("tv", 0))
 
 
 def hash_otp(otp_code: str, settings: Settings) -> str:

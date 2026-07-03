@@ -5,7 +5,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -14,14 +14,14 @@ from app.core.security import decode_access_token
 from app.models.user import User
 from utils.enums import UserRole
 
-_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
+_http_bearer = HTTPBearer()
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 DbSessionDep = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(_oauth2_scheme)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(_http_bearer)],
     session: DbSessionDep,
     settings: SettingsDep,
 ) -> User:
@@ -33,12 +33,14 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        user_id = decode_access_token(token, settings)
-    except jwt.JWTError:
+        user_id, token_version = decode_access_token(credentials.credentials, settings)
+    except jwt.PyJWTError:
         raise credentials_error
 
     user = await UserRepository(session).get_by_id(user_id)
     if user is None or not user.is_active:
+        raise credentials_error
+    if user.token_version != token_version or user.required_relogin:
         raise credentials_error
     return user
 
@@ -133,7 +135,7 @@ def check_practice_access(entity_practice_id: str | None, current_user: User) ->
         current_user,
         [
             UserRole.PRACTICE_ADMIN,
-            UserRole.DOCTOR,
+            UserRole.CODER,
             UserRole.RECEPTIONIST,
             UserRole.STAFF,
         ],

@@ -1,8 +1,11 @@
 # Core dependencies
+boto3>=1.38.0
 alembic>=1.18.4
 asyncpg>=0.31.0
 fastapi>=0.136.1
+python-multipart>=0.0.9
 httpx>=0.28.1
+mailjet-rest>=1.7.0
 bcrypt>=4.0,<5
 prometheus-client>=0.25.0
 pydantic-settings>=2.14.1

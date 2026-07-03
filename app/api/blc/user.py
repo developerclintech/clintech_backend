@@ -24,28 +24,32 @@ class UserService:
                 detail="Email already registered.",
             )
 
-        practice = await self.practices.get_by_id(payload.practice_id)
-        if practice is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Practice not found.",
-            )
+        for assignment in payload.roles:
+            practice = await self.practices.get_by_id(assignment.practice_id)
+            if practice is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Practice '{assignment.practice_id}' not found.",
+                )
 
-        if not is_super_admin(current_user) and not has_role(
-            current_user,
-            [UserRole.PRACTICE_ADMIN],
-            practice_id=payload.practice_id,
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have access to this practice.",
-            )
+            if not is_super_admin(current_user) and not has_role(
+                current_user,
+                [UserRole.PRACTICE_ADMIN],
+                practice_id=assignment.practice_id,
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have access to this practice.",
+                )
 
         user = await self.users.create(payload)
-        await self.users.create_membership(
-            user.id,
-            MembershipCreate(practice_id=payload.practice_id, role=payload.role),
-        )
+        for assignment in payload.roles:
+            await self.users.create_membership(
+                user.id,
+                MembershipCreate(
+                    practice_id=assignment.practice_id, role=assignment.role
+                ),
+            )
 
         # Reload with memberships
         user = await self.users.get_by_id(user.id)
@@ -59,6 +63,10 @@ class UserService:
                 detail="User not found.",
             )
         return UserRead.model_validate(user)
+
+    async def list_users(self, current_user: User) -> list[UserRead]:
+        users = await self.users.get_all()
+        return [UserRead.model_validate(user) for user in users]
 
     async def add_membership(
         self,

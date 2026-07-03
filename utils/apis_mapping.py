@@ -38,3 +38,108 @@ PRACTICE_DELETE_ROLES: list[UserRole] = [
 PRACTICE_STATUS_ROLES: list[UserRole] = [
     UserRole.SUPER_ADMIN,
 ]
+
+DOCUMENT_UPLOAD_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_EDIT_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+DOCUMENT_STATS_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_BULK_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+TASK_CREATE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_EDIT_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_ASSIGN_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+TASK_CATEGORY_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_CATEGORY_MANAGE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
+TASK_PRIORITY_READ_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+TASK_PRIORITY_MANAGE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]

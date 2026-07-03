@@ -32,12 +32,12 @@ def make_membership(practice_id: str | None, role: UserRole) -> UserPractice:
 
 def test_user_can_have_same_role_across_multiple_practices() -> None:
     user = make_user(
-        make_membership("practice-1", UserRole.DOCTOR),
-        make_membership("practice-2", UserRole.DOCTOR),
+        make_membership("practice-1", UserRole.CODER),
+        make_membership("practice-2", UserRole.CODER),
     )
 
-    assert has_role(user, [UserRole.DOCTOR], practice_id="practice-1")
-    assert has_role(user, [UserRole.DOCTOR], practice_id="practice-2")
+    assert has_role(user, [UserRole.CODER], practice_id="practice-1")
+    assert has_role(user, [UserRole.CODER], practice_id="practice-2")
 
 
 def test_user_can_have_different_roles_per_practice() -> None:
@@ -53,15 +53,15 @@ def test_user_can_have_different_roles_per_practice() -> None:
 
 def test_user_can_have_multiple_roles_in_same_practice() -> None:
     user = make_user(
-        make_membership("practice-1", UserRole.DOCTOR),
+        make_membership("practice-1", UserRole.CODER),
         make_membership("practice-1", UserRole.RECEPTIONIST),
     )
 
-    assert has_role(user, [UserRole.DOCTOR], practice_id="practice-1")
+    assert has_role(user, [UserRole.CODER], practice_id="practice-1")
     assert has_role(user, [UserRole.RECEPTIONIST], practice_id="practice-1")
     assert has_role(
         user,
-        [UserRole.PRACTICE_ADMIN, UserRole.DOCTOR],
+        [UserRole.PRACTICE_ADMIN, UserRole.CODER],
         practice_id="practice-1",
     )
 
@@ -74,7 +74,7 @@ def test_super_admin_global_membership_can_access_any_practice() -> None:
 
 
 def test_unassigned_practice_access_is_forbidden() -> None:
-    user = make_user(make_membership("practice-1", UserRole.DOCTOR))
+    user = make_user(make_membership("practice-1", UserRole.CODER))
 
     with pytest.raises(HTTPException) as exc_info:
         check_practice_access("practice-2", user)

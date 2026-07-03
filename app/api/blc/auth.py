@@ -51,7 +51,9 @@ class AuthService:
                 detail="Incorrect email or password.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token = create_access_token(user.id, self.settings)
+        if user.required_relogin:
+            await self.users.set_required_relogin(user, False)
+        access_token = create_access_token(user.id, user.token_version, self.settings)
         return Token(access_token=access_token)
 
     async def request_password_reset(
@@ -76,11 +78,17 @@ class AuthService:
             otp_hash=hash_otp(otp_code, self.settings),
             expires_at=expires_at,
         )
-        await self.otp_delivery.send_password_reset_otp(
-            destination=user.email,
-            otp_code=otp_code,
-            expires_at=expires_at,
-        )
+        try:
+            await self.otp_delivery.send_password_reset_otp(
+                destination=user.email,
+                otp_code=otp_code,
+                expires_at=expires_at,
+            )
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to send password reset email. Please try again later.",
+            ) from exc
 
         return PasswordResetMessage(message=PASSWORD_RESET_REQUESTED_MESSAGE)
 
@@ -108,6 +116,7 @@ class AuthService:
             raise self._invalid_otp_error()
 
         await self.users.update_password(user, payload.new_password)
+        await self.users.increment_token_version(user)
         await self.password_reset_otps.consume(otp, now)
         return PasswordResetMessage(message=PASSWORD_RESET_SUCCESS_MESSAGE)
 

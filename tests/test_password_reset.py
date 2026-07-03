@@ -27,6 +27,14 @@ class FakeUserRepository:
         user.hashed_password = hash_password(password)
         return user
 
+    async def increment_token_version(self, user: SimpleNamespace) -> SimpleNamespace:
+        user.token_version += 1
+        return user
+
+    async def set_required_relogin(self, user: SimpleNamespace, value: bool) -> SimpleNamespace:
+        user.required_relogin = value
+        return user
+
 
 class FakePasswordResetOtpRepository:
     def __init__(self) -> None:
@@ -113,6 +121,8 @@ def make_service() -> tuple[
         email="doctor@example.com",
         hashed_password="old-hash",
         is_active=True,
+        token_version=0,
+        required_relogin=False,
     )
     otp_repo = FakePasswordResetOtpRepository()
     delivery = FakeOtpDelivery()
@@ -158,6 +168,7 @@ async def test_reset_password_with_valid_otp_updates_password() -> None:
     assert response.message == "Password has been reset successfully."
     assert verify_password("new-strong-password", user.hashed_password)
     assert otp_repo.otps[0].consumed_at is not None
+    assert user.token_version == 1
 
 
 @pytest.mark.asyncio

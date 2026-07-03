@@ -22,6 +22,14 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_all(self) -> list[User]:
+        result = await self.session.execute(
+            select(User)
+            .options(selectinload(User.practice_memberships.of_type(UserPractice)))
+            .order_by(User.created_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def get_by_email(self, email: str) -> User | None:
         result = await self.session.execute(
             select(User)
@@ -58,6 +66,18 @@ class UserRepository:
 
     async def update_password(self, user: User, password: str) -> User:
         user.hashed_password = hash_password(password)
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def increment_token_version(self, user: User) -> User:
+        user.token_version += 1
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def set_required_relogin(self, user: User, value: bool) -> User:
+        user.required_relogin = value
         await self.session.flush()
         await self.session.refresh(user)
         return user

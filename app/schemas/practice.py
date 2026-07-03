@@ -13,6 +13,7 @@ class PracticeUpdate(BaseModel):
     phone: str | None = Field(default=None, max_length=20)
     website: str | None = Field(default=None, max_length=255)
     email: str | None = Field(default=None, max_length=255)
+    address: str | None = Field(default=None, max_length=500)
     practice_hours: dict[str, Any] | None = None
     is_emis_enabled: bool | None = None
 
@@ -28,6 +29,7 @@ class PracticeCreate(BaseModel):
     phone: str | None = Field(default=None, max_length=20)
     website: str | None = Field(default=None, max_length=255)
     email: str | None = Field(default=None, max_length=255)
+    address: str | None = Field(default=None, max_length=500)
     practice_hours: dict[str, Any] | None = None
     is_emis_enabled: bool = False
 
@@ -40,6 +42,7 @@ class PracticeRead(BaseModel):
     phone: str | None
     website: str | None
     email: str | None
+    address: str | None
     practice_hours: dict[str, Any] | None
     is_emis_enabled: bool
     is_active: bool
