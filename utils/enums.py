@@ -23,6 +23,7 @@ class DocumentStatus(str, enum.Enum):
     PENDING = "pending"
     PROCESSED = "processed"
     FAILED = "failed"
+    ARCHIVED = "archived"
 
 
 class TaskStatus(str, enum.Enum):

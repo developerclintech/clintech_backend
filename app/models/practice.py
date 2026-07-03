@@ -25,6 +25,7 @@ class Practice(InternalIdMixin, TimestampMixin, Base):
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     website: Mapped[str | None] = mapped_column(String(255), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     practice_hours: Mapped[json] = mapped_column(JSON, nullable=True)
     is_emis_enabled: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False

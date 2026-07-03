@@ -68,6 +68,19 @@ DOCUMENT_DELETE_ROLES: list[UserRole] = [
     UserRole.PRACTICE_ADMIN,
 ]
 
+DOCUMENT_STATS_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+    UserRole.CODER,
+    UserRole.RECEPTIONIST,
+    UserRole.STAFF,
+]
+
+DOCUMENT_BULK_DELETE_ROLES: list[UserRole] = [
+    UserRole.SUPER_ADMIN,
+    UserRole.PRACTICE_ADMIN,
+]
+
 TASK_CREATE_ROLES: list[UserRole] = [
     UserRole.SUPER_ADMIN,
     UserRole.PRACTICE_ADMIN,

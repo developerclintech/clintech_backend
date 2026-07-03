@@ -31,6 +31,7 @@ class DocumentRead(BaseModel):
     description: str | None
     status: DocumentStatus = DocumentStatus.PENDING
     uploaded_by_id: str
+    uploaded_by_name: str | None = None
     practice_id: str | None
     practice_name: str | None = None
     created_at: datetime
@@ -54,3 +55,35 @@ class PaginatedDocumentsResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class StatusCount(BaseModel):
+    status: str
+    count: int
+
+
+class CategoryCount(BaseModel):
+    category: str
+    count: int
+
+
+class DocumentStats(BaseModel):
+    total_documents: int
+    total_size_bytes: int
+    total_size_display: str
+    by_status: list[StatusCount]
+    by_category: list[CategoryCount]
+
+
+class BulkDeleteRequest(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=100)
+
+
+class BulkDeleteFailure(BaseModel):
+    id: str
+    reason: str
+
+
+class BulkDeleteResponse(BaseModel):
+    deleted: list[str]
+    failed: list[BulkDeleteFailure]

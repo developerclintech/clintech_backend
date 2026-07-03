@@ -1,17 +1,30 @@
 from __future__ import annotations
 
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from fastapi.responses import RedirectResponse
 
 from app.api.blc.document import DocumentService
 from app.api.deps import get_document_service
 from app.models.user import User
-from app.schemas.document import BulkUploadResponse, DocumentRead, DocumentStatusUpdate, DocumentUpdate, PaginatedDocumentsResponse
+from app.schemas.document import (
+    BulkDeleteRequest,
+    BulkDeleteResponse,
+    BulkUploadResponse,
+    DocumentRead,
+    DocumentStats,
+    DocumentStatusUpdate,
+    DocumentUpdate,
+    PaginatedDocumentsResponse,
+)
 from utils.apis_mapping import (
+    DOCUMENT_BULK_DELETE_ROLES,
     DOCUMENT_DELETE_ROLES,
     DOCUMENT_EDIT_ROLES,
     DOCUMENT_READ_ROLES,
+    DOCUMENT_STATS_ROLES,
     DOCUMENT_UPLOAD_ROLES,
 )
 from utils.auth_functions import require_roles
@@ -76,6 +89,32 @@ async def upload_documents(
     )
 
 
+@router.post(
+    "/bulk-delete",
+    response_model=BulkDeleteResponse,
+    summary="Delete multiple documents by ID (admin only)",
+)
+async def bulk_delete_documents(
+    payload: BulkDeleteRequest,
+    service: Annotated[DocumentService, Depends(get_document_service)],
+    current_user: Annotated[User, Depends(require_roles(DOCUMENT_BULK_DELETE_ROLES))],
+) -> BulkDeleteResponse:
+    return await service.bulk_delete_documents(payload.ids, current_user)
+
+
+@router.get(
+    "/stats",
+    response_model=DocumentStats,
+    summary="Document counts and storage summary",
+)
+async def get_document_stats(
+    service: Annotated[DocumentService, Depends(get_document_service)],
+    current_user: Annotated[User, Depends(require_roles(DOCUMENT_STATS_ROLES))],
+    practice_id: Annotated[str | None, Query()] = None,
+) -> DocumentStats:
+    return await service.get_stats(current_user, practice_id=practice_id)
+
+
 @router.get(
     "",
     response_model=PaginatedDocumentsResponse,
@@ -89,6 +128,12 @@ async def list_documents(
     practice_id: Annotated[str | None, Query()] = None,
     category: Annotated[DocumentCategory | None, Query()] = None,
     status: Annotated[DocumentStatus | None, Query()] = None,
+    uploaded_by_id: Annotated[str | None, Query()] = None,
+    filename: Annotated[str | None, Query(description="Partial filename search")] = None,
+    date_from: Annotated[datetime | None, Query(description="Filter by upload date (from, inclusive)")] = None,
+    date_to: Annotated[datetime | None, Query(description="Filter by upload date (to, inclusive)")] = None,
+    sort_by: Annotated[Literal["created_at", "filename", "file_size"], Query()] = "created_at",
+    sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
 ) -> PaginatedDocumentsResponse:
     return await service.list_documents(
         current_user=current_user,
@@ -97,6 +142,12 @@ async def list_documents(
         practice_id=practice_id,
         category=category,
         status=status,
+        uploaded_by_id=uploaded_by_id,
+        filename=filename,
+        date_from=date_from,
+        date_to=date_to,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
 
@@ -111,6 +162,21 @@ async def get_document(
     current_user: Annotated[User, Depends(require_roles(DOCUMENT_READ_ROLES))],
 ) -> DocumentRead:
     return await service.get_document(document_id, current_user)
+
+
+@router.get(
+    "/{document_id}/download",
+    summary="Redirect to a fresh pre-signed S3 download URL",
+    response_class=RedirectResponse,
+    status_code=302,
+)
+async def download_document(
+    document_id: str,
+    service: Annotated[DocumentService, Depends(get_document_service)],
+    current_user: Annotated[User, Depends(require_roles(DOCUMENT_READ_ROLES))],
+) -> RedirectResponse:
+    url = await service.get_presigned_url(document_id, current_user)
+    return RedirectResponse(url=url, status_code=302)
 
 
 @router.patch(
@@ -139,6 +205,20 @@ async def change_document_status(
     current_user: Annotated[User, Depends(require_roles(DOCUMENT_EDIT_ROLES))],
 ) -> DocumentRead:
     return await service.change_document_status(document_id, payload.status, current_user)
+
+
+@router.put(
+    "/{document_id}/file",
+    response_model=DocumentRead,
+    summary="Replace the file content of an existing document",
+)
+async def replace_document_file(
+    document_id: str,
+    service: Annotated[DocumentService, Depends(get_document_service)],
+    current_user: Annotated[User, Depends(require_roles(DOCUMENT_EDIT_ROLES))],
+    file: UploadFile = File(..., description="Replacement file"),
+) -> DocumentRead:
+    return await service.replace_document_file(document_id, file, current_user)
 
 
 @router.delete(
