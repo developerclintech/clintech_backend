@@ -31,6 +31,14 @@ class TaskStatusUpdate(BaseModel):
     status: TaskStatus
 
 
+class TaskPriorityChange(BaseModel):
+    priority: str = Field(min_length=1, max_length=20)
+
+
+class TaskCategoryChange(BaseModel):
+    category: str = Field(min_length=1, max_length=50)
+
+
 class AssignedUserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

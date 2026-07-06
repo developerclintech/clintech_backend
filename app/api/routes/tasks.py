@@ -10,7 +10,9 @@ from app.models.user import User
 from app.schemas.task import (
     PaginatedTasksResponse,
     TaskAssign,
+    TaskCategoryChange,
     TaskCreate,
+    TaskPriorityChange,
     TaskRead,
     TaskStatusUpdate,
     TaskUpdate,
@@ -123,6 +125,34 @@ async def update_task_status(
     current_user: Annotated[User, Depends(require_roles(TASK_EDIT_ROLES))],
 ) -> TaskRead:
     return await service.update_task_status(task_id, payload.status, current_user)
+
+
+@router.patch(
+    "/{task_id}/priority",
+    response_model=TaskRead,
+    summary="Change task priority",
+)
+async def update_task_priority(
+    task_id: str,
+    payload: TaskPriorityChange,
+    service: Annotated[TaskService, Depends(get_task_service)],
+    current_user: Annotated[User, Depends(require_roles(TASK_EDIT_ROLES))],
+) -> TaskRead:
+    return await service.update_task_priority(task_id, payload.priority, current_user)
+
+
+@router.patch(
+    "/{task_id}/category",
+    response_model=TaskRead,
+    summary="Change task category",
+)
+async def update_task_category(
+    task_id: str,
+    payload: TaskCategoryChange,
+    service: Annotated[TaskService, Depends(get_task_service)],
+    current_user: Annotated[User, Depends(require_roles(TASK_EDIT_ROLES))],
+) -> TaskRead:
+    return await service.update_task_category(task_id, payload.category, current_user)
 
 
 @router.delete(

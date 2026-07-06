@@ -165,6 +165,34 @@ class TaskService:
         task = await self.tasks.get_by_id(task.id)
         return _to_read(task)
 
+    async def update_task_priority(
+        self, task_id: str, priority: str, current_user: User
+    ) -> TaskRead:
+        task = await self.tasks.get_by_id(task_id)
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found.",
+            )
+        await self._validate_priority(priority)
+        task = await self.tasks.update_priority(task, priority)
+        task = await self.tasks.get_by_id(task.id)
+        return _to_read(task)
+
+    async def update_task_category(
+        self, task_id: str, category: str, current_user: User
+    ) -> TaskRead:
+        task = await self.tasks.get_by_id(task_id)
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found.",
+            )
+        await self._validate_category(category)
+        task = await self.tasks.update_category(task, category)
+        task = await self.tasks.get_by_id(task.id)
+        return _to_read(task)
+
     async def delete_task(self, task_id: str, current_user: User) -> None:
         task = await self.tasks.get_by_id(task_id)
         if task is None:

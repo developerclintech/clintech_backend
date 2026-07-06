@@ -70,6 +70,18 @@ class TaskRepository:
         await self.session.refresh(task)
         return task
 
+    async def update_priority(self, task: Task, priority: str) -> Task:
+        task.priority = priority
+        await self.session.flush()
+        await self.session.refresh(task)
+        return task
+
+    async def update_category(self, task: Task, category: str) -> Task:
+        task.category = category
+        await self.session.flush()
+        await self.session.refresh(task)
+        return task
+
     async def delete(self, task: Task) -> None:
         await self.session.delete(task)
         await self.session.flush()
