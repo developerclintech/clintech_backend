@@ -12,9 +12,9 @@ class TaskCategoryRepository:
         self.session = session
 
     async def create(
-        self, *, name: str, practice_id: str, color: str | None = None, description: str | None = None
+        self, *, name: str, color: str | None = None, description: str | None = None
     ) -> TaskCategory:
-        category = TaskCategory(name=name, practice_id=practice_id, color=color, description=description)
+        category = TaskCategory(name=name, color=color, description=description)
         self.session.add(category)
         await self.session.flush()
         await self.session.refresh(category)
@@ -26,19 +26,14 @@ class TaskCategoryRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_name(self, practice_id: str, name: str) -> TaskCategory | None:
+    async def get_by_name(self, name: str) -> TaskCategory | None:
         result = await self.session.execute(
-            select(TaskCategory).where(
-                TaskCategory.practice_id == practice_id, TaskCategory.name == name
-            )
+            select(TaskCategory).where(TaskCategory.name == name)
         )
         return result.scalar_one_or_none()
 
-    async def get_all(self, practice_id: str | None = None) -> list[TaskCategory]:
-        query = select(TaskCategory).order_by(TaskCategory.name)
-        if practice_id is not None:
-            query = query.where(TaskCategory.practice_id == practice_id)
-        result = await self.session.execute(query)
+    async def get_all(self) -> list[TaskCategory]:
+        result = await self.session.execute(select(TaskCategory).order_by(TaskCategory.name))
         return list(result.scalars().all())
 
     async def update(self, category: TaskCategory, payload: TaskCategoryUpdate) -> TaskCategory:

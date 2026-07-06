@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.blc.task_priority import TaskPriorityService
 from app.api.deps import get_task_priority_service
@@ -35,10 +35,9 @@ async def create_task_priority(
 )
 async def list_task_priorities(
     service: Annotated[TaskPriorityService, Depends(get_task_priority_service)],
-    current_user: Annotated[User, Depends(require_roles(TASK_PRIORITY_READ_ROLES))],
-    practice_id: Annotated[str | None, Query()] = None,
+    current_user: Annotated[User, Depends(require_roles(TASK_PRIORITY_MANAGE_ROLES))],
 ) -> list[TaskPriorityRead]:
-    return await service.list_priorities(practice_id, current_user)
+    return await service.list_priorities(current_user)
 
 
 @router.get(
