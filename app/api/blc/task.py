@@ -51,30 +51,26 @@ class TaskService:
                     detail="Assigned user not found.",
                 )
 
-    async def _validate_priority(self, practice_id: str | None, priority: str) -> None:
-        if practice_id is None:
-            return
-        found = await self.task_priorities.get_by_name(practice_id, priority)
+    async def _validate_priority(self, priority: str) -> None:
+        found = await self.task_priorities.get_by_name(priority)
         if found is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Priority '{priority}' is not defined for this practice.",
+                detail=f"Priority '{priority}' is not defined.",
             )
 
-    async def _validate_category(self, practice_id: str | None, category: str) -> None:
-        if practice_id is None:
-            return
-        found = await self.task_categories.get_by_name(practice_id, category)
+    async def _validate_category(self, category: str) -> None:
+        found = await self.task_categories.get_by_name(category)
         if found is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Category '{category}' is not defined for this practice.",
+                detail=f"Category '{category}' is not defined.",
             )
 
     async def create_task(self, payload: TaskCreate, current_user: User) -> TaskRead:
         await self._validate_assignee(payload.assigned_to_id)
-        await self._validate_priority(payload.practice_id, payload.priority)
-        await self._validate_category(payload.practice_id, payload.category)
+        await self._validate_priority(payload.priority)
+        await self._validate_category(payload.category)
         task = await self.tasks.create(
             title=payload.title,
             priority=payload.priority,
@@ -135,9 +131,9 @@ class TaskService:
                 detail="Task not found.",
             )
         if payload.priority is not None:
-            await self._validate_priority(task.practice_id, payload.priority)
+            await self._validate_priority(payload.priority)
         if payload.category is not None:
-            await self._validate_category(task.practice_id, payload.category)
+            await self._validate_category(payload.category)
         task = await self.tasks.update(task, payload)
         task = await self.tasks.get_by_id(task.id)
         return _to_read(task)

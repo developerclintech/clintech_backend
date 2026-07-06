@@ -15,13 +15,12 @@ class TaskPriorityRepository:
         self,
         *,
         name: str,
-        practice_id: str,
         color: str | None = None,
         sort_order: int | None = None,
         description: str | None = None,
     ) -> TaskPriority:
         priority = TaskPriority(
-            name=name, practice_id=practice_id, color=color, sort_order=sort_order, description=description
+            name=name, color=color, sort_order=sort_order, description=description
         )
         self.session.add(priority)
         await self.session.flush()
@@ -34,19 +33,14 @@ class TaskPriorityRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_name(self, practice_id: str, name: str) -> TaskPriority | None:
+    async def get_by_name(self, name: str) -> TaskPriority | None:
         result = await self.session.execute(
-            select(TaskPriority).where(
-                TaskPriority.practice_id == practice_id, TaskPriority.name == name
-            )
+            select(TaskPriority).where(TaskPriority.name == name)
         )
         return result.scalar_one_or_none()
 
-    async def get_all(self, practice_id: str | None = None) -> list[TaskPriority]:
-        query = select(TaskPriority).order_by(TaskPriority.name)
-        if practice_id is not None:
-            query = query.where(TaskPriority.practice_id == practice_id)
-        result = await self.session.execute(query)
+    async def get_all(self) -> list[TaskPriority]:
+        result = await self.session.execute(select(TaskPriority).order_by(TaskPriority.name))
         return list(result.scalars().all())
 
     async def update(self, priority: TaskPriority, payload: TaskPriorityUpdate) -> TaskPriority:

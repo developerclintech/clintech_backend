@@ -85,26 +85,20 @@ def get_task_priority_repository(session: DbSessionDep) -> TaskPriorityRepositor
 
 def get_practice_service(
     practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
-    task_categories: Annotated[TaskCategoryRepository, Depends(get_task_category_repository)],
-    task_priorities: Annotated[TaskPriorityRepository, Depends(get_task_priority_repository)],
 ) -> PracticeService:
-    return PracticeService(
-        practices=practices, task_categories=task_categories, task_priorities=task_priorities
-    )
+    return PracticeService(practices=practices)
 
 
 def get_task_category_service(
     task_categories: Annotated[TaskCategoryRepository, Depends(get_task_category_repository)],
-    practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
 ) -> TaskCategoryService:
-    return TaskCategoryService(categories=task_categories, practices=practices)
+    return TaskCategoryService(categories=task_categories)
 
 
 def get_task_priority_service(
     task_priorities: Annotated[TaskPriorityRepository, Depends(get_task_priority_repository)],
-    practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
 ) -> TaskPriorityService:
-    return TaskPriorityService(priorities=task_priorities, practices=practices)
+    return TaskPriorityService(priorities=task_priorities)
 
 
 def get_document_repository(session: DbSessionDep) -> DocumentRepository:

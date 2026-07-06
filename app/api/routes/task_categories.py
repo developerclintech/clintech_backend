@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.blc.task_category import TaskCategoryService
 from app.api.deps import get_task_category_service
@@ -35,10 +35,9 @@ async def create_task_category(
 )
 async def list_task_categories(
     service: Annotated[TaskCategoryService, Depends(get_task_category_service)],
-    current_user: Annotated[User, Depends(require_roles(TASK_CATEGORY_READ_ROLES))],
-    practice_id: Annotated[str | None, Query()] = None,
+    current_user: Annotated[User, Depends(require_roles(TASK_CATEGORY_MANAGE_ROLES))],
 ) -> list[TaskCategoryRead]:
-    return await service.list_categories(practice_id, current_user)
+    return await service.list_categories(current_user)
 
 
 @router.get(
