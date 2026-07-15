@@ -27,6 +27,7 @@ class DocumentStatus(str, enum.Enum):
 
 
 class TaskStatus(str, enum.Enum):
+    NOT_STARTED = "not started"
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"

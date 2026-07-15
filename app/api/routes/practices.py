@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.blc.practice import PracticeService
 from app.api.deps import get_practice_service
@@ -33,8 +33,12 @@ async def create_practice(
 async def list_practices(
     service: Annotated[PracticeService, Depends(get_practice_service)],
     current_user: Annotated[User, Depends(require_roles(PRACTICE_READ_ROLES))],
+    exclude_user_id: Annotated[
+        str | None,
+        Query(description="Skip practices already assigned to this user."),
+    ] = None,
 ) -> list[PracticeRead]:
-    return await service.list_practices(current_user)
+    return await service.list_practices(current_user, exclude_user_id=exclude_user_id)
 
 
 @router.get("/{practice_id}", response_model=PracticeRead)
