@@ -69,6 +69,10 @@ class FakeLoginUserRepo:
         self.relogin_writes.append(value)
         return user
 
+    async def increment_token_version(self, user: SimpleNamespace) -> SimpleNamespace:
+        user.token_version += 1
+        return user
+
 
 class FakeOtpDelivery:
     async def send_password_reset_otp(self, *, destination, otp_code, expires_at) -> None:
@@ -150,6 +154,38 @@ async def test_login_skips_db_write_when_relogin_already_false() -> None:
     await service.login(LoginRequest(email="user@example.com", password="correct-password"))
 
     assert repo.relogin_writes == []
+
+
+# ---------------------------------------------------------------------------
+# Logout — token invalidation via token_version bump
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_logout_increments_token_version() -> None:
+    user = make_user(token_version=2)
+    service, _ = make_auth_service(user)
+
+    resp = await service.logout(user)
+
+    assert user.token_version == 3
+    assert resp.message == "Logged out successfully."
+
+
+@pytest.mark.asyncio
+async def test_token_issued_before_logout_is_stale() -> None:
+    """A token minted at login must no longer match the DB version after logout."""
+    user = make_user(token_version=0)
+    service, _ = make_auth_service(user)
+
+    login_resp = await service.login(
+        LoginRequest(email="user@example.com", password="correct-password")
+    )
+    _, jwt_tv = decode_access_token(login_resp.access_token, SETTINGS)
+
+    await service.logout(user)
+
+    assert jwt_tv != user.token_version, "pre-logout token must be rejected"
 
 
 # ---------------------------------------------------------------------------

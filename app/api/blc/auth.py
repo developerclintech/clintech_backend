@@ -10,9 +10,11 @@ from app.api.queries.password_reset_otp import PasswordResetOtpRepository
 from app.api.queries.user import UserRepository
 from app.core.config import Settings
 from app.core.security import create_access_token, hash_otp, verify_otp, verify_password
+from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
     LoginRequest,
+    LogoutMessage,
     PasswordResetMessage,
     ResetPasswordRequest,
     Token,
@@ -22,6 +24,7 @@ PASSWORD_RESET_REQUESTED_MESSAGE = (
     "If an account exists, a password reset OTP has been sent."
 )
 PASSWORD_RESET_SUCCESS_MESSAGE = "Password has been reset successfully."
+LOGOUT_SUCCESS_MESSAGE = "Logged out successfully."
 OTP_DELIVERY_CHANNEL = "email"
 
 
@@ -55,6 +58,10 @@ class AuthService:
             await self.users.set_required_relogin(user, False)
         access_token = create_access_token(user.id, user.token_version, self.settings)
         return Token(access_token=access_token)
+
+    async def logout(self, user: User) -> LogoutMessage:
+        await self.users.increment_token_version(user)
+        return LogoutMessage(message=LOGOUT_SUCCESS_MESSAGE)
 
     async def request_password_reset(
         self,

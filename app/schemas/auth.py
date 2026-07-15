@@ -25,3 +25,7 @@ class ResetPasswordRequest(BaseModel):
 
 class PasswordResetMessage(BaseModel):
     message: str
+
+
+class LogoutMessage(BaseModel):
+    message: str
