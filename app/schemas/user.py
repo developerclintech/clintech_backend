@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -25,6 +25,7 @@ class UserCreate(BaseModel):
     first_name: str = Field(min_length=1, max_length=255)
     middle_name: str | None = Field(default=None, max_length=255)
     last_name: str = Field(min_length=1, max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
     roles: list[RoleAssignment] = Field(min_length=1)
 
     @field_validator("roles")
@@ -37,6 +38,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    email: str | None = Field(default=None, min_length=1, max_length=255)
     first_name: str | None = Field(default=None, min_length=1, max_length=255)
     middle_name: str | None = Field(default=None, max_length=255)
     last_name: str | None = Field(default=None, min_length=1, max_length=255)
@@ -71,6 +73,10 @@ class UserRead(BaseModel):
     middle_name: str | None
     last_name: str
     full_name: str
+    phone: str | None
+    date_of_birth: date | None
+    sex_at_birth: str | None
+    gender: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime

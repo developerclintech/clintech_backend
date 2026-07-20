@@ -77,6 +77,13 @@ class UserService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
             )
+        if payload.email is not None and payload.email != user.email:
+            existing = await self.users.get_by_email(payload.email)
+            if existing is not None and existing.id != user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already registered.",
+                )
         user = await self.users.update(user, payload)
         return UserRead.model_validate(user)
 

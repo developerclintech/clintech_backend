@@ -45,6 +45,7 @@ class UserRepository:
             first_name=payload.first_name,
             middle_name=payload.middle_name,
             last_name=payload.last_name,
+            phone=payload.phone,
             full_name=f"{payload.first_name} {payload.last_name}",
         )
         self.session.add(user)
