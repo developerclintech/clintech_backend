@@ -4,6 +4,7 @@ import math
 
 from fastapi import HTTPException, status
 
+from app.api.queries.document import DocumentRepository
 from app.api.queries.task import TaskRepository
 from app.api.queries.task_category import TaskCategoryRepository
 from app.api.queries.task_priority import TaskPriorityRepository
@@ -25,6 +26,8 @@ def _to_read(task: object) -> TaskRead:
         read.created_by_name = task.created_by.full_name
     if task.assigned_to:
         read.assigned_to_name = task.assigned_to.full_name
+    if task.document:
+        read.document_filename = task.document.filename
     return read
 
 
@@ -36,11 +39,13 @@ class TaskService:
         users: UserRepository,
         task_categories: TaskCategoryRepository,
         task_priorities: TaskPriorityRepository,
+        documents: DocumentRepository,
     ) -> None:
         self.tasks = tasks
         self.users = users
         self.task_categories = task_categories
         self.task_priorities = task_priorities
+        self.documents = documents
 
     async def _validate_assignee(self, assigned_to_id: str | None) -> None:
         if assigned_to_id is not None:
@@ -49,6 +54,15 @@ class TaskService:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Assigned user not found.",
+                )
+
+    async def _validate_document(self, document_id: str | None) -> None:
+        if document_id is not None:
+            document = await self.documents.get_by_id(document_id)
+            if document is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Document not found.",
                 )
 
     async def _validate_priority(self, priority: str) -> None:
@@ -71,6 +85,7 @@ class TaskService:
         await self._validate_assignee(payload.assigned_to_id)
         await self._validate_priority(payload.priority)
         await self._validate_category(payload.category)
+        await self._validate_document(payload.document_id)
         task = await self.tasks.create(
             title=payload.title,
             priority=payload.priority,
@@ -79,6 +94,7 @@ class TaskService:
             created_by_id=current_user.id,
             assigned_to_id=payload.assigned_to_id,
             practice_id=payload.practice_id,
+            document_id=payload.document_id,
         )
         task = await self.tasks.get_by_id(task.id)
         return _to_read(task)
@@ -93,6 +109,7 @@ class TaskService:
         category: str | None = None,
         practice_id: str | None = None,
         assigned_to_id: str | None = None,
+        document_id: str | None = None,
     ) -> PaginatedTasksResponse:
         tasks, total = await self.tasks.get_paginated(
             page=page,
@@ -102,6 +119,7 @@ class TaskService:
             category=category,
             practice_id=practice_id,
             assigned_to_id=assigned_to_id,
+            document_id=document_id,
         )
         items = [_to_read(t) for t in tasks]
         return PaginatedTasksResponse(
@@ -134,6 +152,8 @@ class TaskService:
             await self._validate_priority(payload.priority)
         if payload.category is not None:
             await self._validate_category(payload.category)
+        if payload.document_id is not None:
+            await self._validate_document(payload.document_id)
         task = await self.tasks.update(task, payload)
         task = await self.tasks.get_by_id(task.id)
         return _to_read(task)

@@ -18,6 +18,14 @@ class DocumentStatusUpdate(BaseModel):
     status: DocumentStatus
 
 
+class LinkedTask(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    title: str
+    status: str
+
+
 class DocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +45,8 @@ class DocumentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     download_url: str | None = None
+    has_task: bool = False
+    tasks: list[LinkedTask] = Field(default_factory=list)
 
 
 class BulkUploadResponse(BaseModel):

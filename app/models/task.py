@@ -28,7 +28,11 @@ class Task(InternalIdMixin, TimestampMixin, Base):
     practice_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("practices.id", ondelete="SET NULL"), nullable=True
     )
+    document_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("documents.id", ondelete="SET NULL"), nullable=True
+    )
 
     created_by: Mapped[User] = relationship("User", lazy="select", foreign_keys=[created_by_id])
     assigned_to: Mapped[User | None] = relationship("User", lazy="select", foreign_keys=[assigned_to_id])
     practice: Mapped[Practice | None] = relationship("Practice", lazy="select", foreign_keys=[practice_id])
+    document: Mapped[Document | None] = relationship("Document", lazy="select", foreign_keys=[document_id])

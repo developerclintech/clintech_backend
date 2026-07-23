@@ -8,6 +8,7 @@ from fastapi import HTTPException, UploadFile, status
 
 from app.api.queries.document import DocumentRepository
 from app.api.queries.practice import PracticeRepository
+from app.api.queries.task import TaskRepository
 from app.core import s3
 from app.models.user import User
 from app.schemas.document import (
@@ -18,6 +19,7 @@ from app.schemas.document import (
     DocumentRead,
     DocumentStats,
     DocumentUpdate,
+    LinkedTask,
     PaginatedDocumentsResponse,
     StatusCount,
     UploadFailure,
@@ -79,9 +81,12 @@ def _enrich(
 
 
 class DocumentService:
-    def __init__(self, *, documents: DocumentRepository, practices: PracticeRepository) -> None:
+    def __init__(
+        self, *, documents: DocumentRepository, practices: PracticeRepository, tasks: TaskRepository
+    ) -> None:
         self.documents = documents
         self.practices = practices
+        self.tasks = tasks
 
     async def _validate_practice(self, practice_id: str | None) -> None:
         if practice_id is not None and await self.practices.get_by_id(practice_id) is None:
@@ -206,6 +211,9 @@ class DocumentService:
             read.download_url = s3.generate_presigned_url(doc.s3_key)
         except RuntimeError:
             read.download_url = None
+        linked_tasks = await self.tasks.get_all_by_document_id(document_id)
+        read.has_task = len(linked_tasks) > 0
+        read.tasks = [LinkedTask.model_validate(t) for t in linked_tasks]
         return read
 
     async def get_presigned_url(self, document_id: str, current_user: User) -> str:

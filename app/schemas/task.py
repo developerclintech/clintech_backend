@@ -14,6 +14,7 @@ class TaskCreate(BaseModel):
     description: str = Field(min_length=1, max_length=2000)
     assigned_to_id: str | None = None
     practice_id: str | None = None
+    document_id: str | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -21,6 +22,7 @@ class TaskUpdate(BaseModel):
     priority: str | None = Field(default=None, min_length=1, max_length=20)
     category: str | None = Field(default=None, min_length=1, max_length=50)
     description: str | None = Field(default=None, min_length=1, max_length=2000)
+    document_id: str | None = None
 
 
 class TaskAssign(BaseModel):
@@ -60,6 +62,8 @@ class TaskRead(BaseModel):
     assigned_to_id: str | None
     assigned_to_name: str | None = None
     practice_id: str | None
+    document_id: str | None
+    document_filename: str | None = None
     created_at: datetime
     updated_at: datetime
 

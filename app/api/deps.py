@@ -108,8 +108,9 @@ def get_document_repository(session: DbSessionDep) -> DocumentRepository:
 def get_document_service(
     documents: Annotated[DocumentRepository, Depends(get_document_repository)],
     practices: Annotated[PracticeRepository, Depends(get_practice_repository)],
+    tasks: Annotated[TaskRepository, Depends(get_task_repository)],
 ) -> DocumentService:
-    return DocumentService(documents=documents, practices=practices)
+    return DocumentService(documents=documents, practices=practices, tasks=tasks)
 
 
 def get_task_repository(session: DbSessionDep) -> TaskRepository:
@@ -121,7 +122,12 @@ def get_task_service(
     users: Annotated[UserRepository, Depends(get_user_repository)],
     task_categories: Annotated[TaskCategoryRepository, Depends(get_task_category_repository)],
     task_priorities: Annotated[TaskPriorityRepository, Depends(get_task_priority_repository)],
+    documents: Annotated[DocumentRepository, Depends(get_document_repository)],
 ) -> TaskService:
     return TaskService(
-        tasks=tasks, users=users, task_categories=task_categories, task_priorities=task_priorities
+        tasks=tasks,
+        users=users,
+        task_categories=task_categories,
+        task_priorities=task_priorities,
+        documents=documents,
     )

@@ -23,6 +23,7 @@ class TaskRepository:
         created_by_id: str,
         assigned_to_id: str | None = None,
         practice_id: str | None = None,
+        document_id: str | None = None,
     ) -> Task:
         task = Task(
             title=title,
@@ -33,6 +34,7 @@ class TaskRepository:
             created_by_id=created_by_id,
             assigned_to_id=assigned_to_id,
             practice_id=practice_id,
+            document_id=document_id,
         )
         self.session.add(task)
         await self.session.flush()
@@ -46,10 +48,17 @@ class TaskRepository:
                 joinedload(Task.created_by),
                 joinedload(Task.assigned_to),
                 joinedload(Task.practice),
+                joinedload(Task.document),
             )
             .where(Task.id == task_id)
         )
         return result.scalar_one_or_none()
+
+    async def get_all_by_document_id(self, document_id: str) -> list[Task]:
+        result = await self.session.execute(
+            select(Task).where(Task.document_id == document_id).order_by(Task.created_at.desc())
+        )
+        return list(result.scalars().all())
 
     async def update(self, task: Task, payload: TaskUpdate) -> Task:
         for field, value in payload.model_dump(exclude_none=True).items():
@@ -96,11 +105,13 @@ class TaskRepository:
         category: str | None = None,
         practice_id: str | None = None,
         assigned_to_id: str | None = None,
+        document_id: str | None = None,
     ) -> tuple[list[Task], int]:
         base = select(Task).options(
             joinedload(Task.created_by),
             joinedload(Task.assigned_to),
             joinedload(Task.practice),
+            joinedload(Task.document),
         )
         count_base = select(func.count()).select_from(Task)
 
@@ -119,6 +130,9 @@ class TaskRepository:
         if assigned_to_id is not None:
             base = base.where(Task.assigned_to_id == assigned_to_id)
             count_base = count_base.where(Task.assigned_to_id == assigned_to_id)
+        if document_id is not None:
+            base = base.where(Task.document_id == document_id)
+            count_base = count_base.where(Task.document_id == document_id)
 
         total = (await self.session.execute(count_base)).scalar_one()
 

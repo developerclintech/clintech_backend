@@ -59,6 +59,7 @@ async def list_tasks(
     category: Annotated[str | None, Query()] = None,
     practice_id: Annotated[str | None, Query()] = None,
     assigned_to_id: Annotated[str | None, Query()] = None,
+    document_id: Annotated[str | None, Query()] = None,
 ) -> PaginatedTasksResponse:
     return await service.list_tasks(
         current_user=current_user,
@@ -69,6 +70,7 @@ async def list_tasks(
         category=category,
         practice_id=practice_id,
         assigned_to_id=assigned_to_id,
+        document_id=document_id,
     )
 
 
